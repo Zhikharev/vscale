@@ -1,3 +1,21 @@
+MAKEHOME := $(dir $(lastword $(MAKEFILE_LIST)))
+RTL_SRC :=\
+	$(MAKEHOME)/src/main/verilog/vscale_alu.v \
+	$(MAKEHOME)/src/main/verilog/vscale_csr_file.v \
+	$(MAKEHOME)/src/main/verilog/vscale_ctrl.v \
+	$(MAKEHOME)/src/main/verilog/vscale_hasti_bridge.v \
+	$(MAKEHOME)/src/main/verilog/vscale_imm_gen.v \
+	$(MAKEHOME)/src/main/verilog/vscale_mul_div.v \
+	$(MAKEHOME)/src/main/verilog/vscale_PC_mux.v \
+	$(MAKEHOME)/src/main/verilog/vscale_regfile.v \
+	$(MAKEHOME)/src/main/verilog/vscale_src_a_mux.v \
+	$(MAKEHOME)/src/main/verilog/vscale_src_b_mux.v \
+	$(MAKEHOME)/src/main/verilog/vscale_pipeline.v \
+	$(MAKEHOME)/src/main/verilog/vscale_core.v \
+	$(MAKEHOME)/src/main/verilog/vscale_selen.v \
+
+VCS_RTL_INC := +incdir+$(MAKEHOME)/src/main/verilog
+
 RV32_TESTS = \
 	rv32ui-p-add \
 	rv32ui-p-addi \
