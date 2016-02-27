@@ -16,6 +16,10 @@ RTL_SRC :=\
 
 VCS_RTL_INC := +incdir+$(MAKEHOME)/src/main/verilog
 
+RTL_DEFINE :=\
+	+define+COMMIT_VAL_PATH=vscale.ctrl.retire_WB \
+	+define+REG_FILE_PATH=vscale.regfile.data
+
 RV32_TESTS = \
 	rv32ui-p-add \
 	rv32ui-p-addi \
