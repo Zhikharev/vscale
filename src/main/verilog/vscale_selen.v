@@ -3,6 +3,10 @@
 `include "vscale_csr_addr_map.vh"
 
 module core_top
+#(
+  parameter [31:0] NC_BASE_ADDR = 32'h0000_0000,
+  parameter [31:0] NC_OFFSET    = 32'h0000_ffff
+ )
 (
   input           clk,
   input           rst_n,
@@ -33,6 +37,9 @@ module core_top
   wire [`XPR_LEN-1:0]        dmem_wdata_delayed;
   wire [`XPR_LEN-1:0]        dmem_rdata;
   wire                       dmem_badmem_e;
+
+  wire d_req_cop_wr;
+  wire d_req_cop_nc;
 
   vscale_pipeline vscale
   (
@@ -69,11 +76,14 @@ module core_top
 
   assign d_req_val      = dmem_en;
   assign d_req_addr     = dmem_addr;
-  assign d_req_cop      = (dmem_wen) ? 3'b001 : 3'b000;
+  assign d_req_cop      = {1'b0, d_req_cop_nc, d_req_cop_wr};
   assign d_req_wdata    = dmem_wdata_delayed;
   assign d_req_size     = dmem_size;
   assign dmem_wait      = ~d_req_ack;
   assign dmem_rdata     = d_ack_rdata;
   assign dmem_badmem_e  = 1'b0;
+
+  assign d_req_cop_wr   = dmem_wen;
+  assign d_req_cop_nc   = (dmem_addr & ~({32{1'b0}} | NC_OFFSET)) == NC_BASE_ADDR;
 
 endmodule
