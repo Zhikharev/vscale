@@ -105,13 +105,17 @@ module vscale_csr_file(
 
    always @(*) begin
       if (host_wen) begin
-         wdata_internal = htif_pcr_req_data;
-      end else if (system_wen) begin
-         case (cmd)
-           `CSR_SET : wdata_internal = rdata | wdata;
-           `CSR_CLEAR : wdata_internal = rdata & ~wdata;
+        wdata_internal = htif_pcr_req_data;
+      end
+      else if (system_wen) begin
+        case (cmd)
+          `CSR_SET : wdata_internal = rdata | wdata;
+          `CSR_CLEAR : wdata_internal = rdata & ~wdata;
            default : wdata_internal = wdata;
-         endcase // case (cmd)
+        endcase // case (cmd)
+      end
+      else begin
+        wdata_internal = wdata;
       end
    end // always @ begin
 
