@@ -44,6 +44,7 @@ module core_top
   reg                        dmem_en_delayed;
   reg [`XPR_LEN-1:0]         dmem_addr_delayed;
   reg [`MEM_TYPE_WIDTH-1:0]  dmem_size_delayed;
+  reg                        dmem_en_r;
 
   vscale_pipeline vscale
   (
@@ -74,6 +75,15 @@ module core_top
 
   always @(posedge clk or negedge rst_n) begin
     if(~rst_n) begin
+      dmem_en_delayed <= 1'b0;
+    end
+    else begin
+      dmem_en_delayed <= dmem_en & dmem_wen;;
+    end
+  end
+
+  always @(posedge clk or negedge rst_n) begin
+    if(~rst_n) begin
       dmem_addr_delayed <= 0;
       dmem_size_delayed <= 0;
     end else begin
@@ -86,11 +96,11 @@ module core_top
 
   always @(posedge clk or negedge rst_n) begin
     if(~rst_n) begin
-      dmem_en_delayed   <= 1'b0;
+      dmem_en_r <= 1'b0;
     end
     else begin
-      if(dmem_en_delayed) dmem_en_delayed <= ~d_req_ack;
-      else dmem_en_delayed <= dmem_en & dmem_wen;
+      if(dmem_en_r) dmem_en_r <= ~d_req_ack | dmem_en;
+      else dmem_en_r <= dmem_en;
     end
   end
 
@@ -100,7 +110,7 @@ module core_top
   assign imem_rdata     = i_ack_rdata;
   assign imem_badmem_e  = 1'b0;
 
-  assign d_req_val      = dmem_en_delayed | (dmem_en & ~dmem_wen);
+  assign d_req_val      = dmem_en_r | dmem_en;
   assign d_req_addr     = (dmem_en_delayed) ? dmem_addr_delayed : dmem_addr;
   assign d_req_cop      = {1'b0, d_req_cop_nc, d_req_cop_wr};
   assign d_req_wdata    = dmem_wdata_delayed;
