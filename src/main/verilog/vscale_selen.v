@@ -114,7 +114,7 @@ module core_top
   assign d_req_addr     = (dmem_en_delayed) ? dmem_addr_delayed : dmem_addr;
   assign d_req_cop      = {1'b0, d_req_cop_nc, d_req_cop_wr};
   assign d_req_wdata    = dmem_wdata_delayed;
-  assign d_req_size     = (dmem_en_delayed) ? dmem_size_delayed : dmem_size;
+  assign d_req_size     = (dmem_en_delayed) ? (dmem_size_delayed << 1) : (dmem_size << 1);
   assign dmem_wait      = ~d_req_ack;
   assign dmem_rdata     = d_ack_rdata;
   assign dmem_badmem_e  = 1'b0;
