@@ -25,6 +25,8 @@ module core_top
   input   [31:0]  d_ack_rdata
 );
 
+  localparam MAX_REQ_ON_THE_FLY = 2;
+
   wire                       imem_wait;
   wire [`XPR_LEN-1:0]        imem_addr;
   wire [`XPR_LEN-1:0]        imem_rdata;
@@ -38,13 +40,17 @@ module core_top
   wire [`XPR_LEN-1:0]        dmem_rdata;
   wire                       dmem_badmem_e;
 
+  wire                       dmem_nc;
+
   wire                       d_req_cop_wr;
   wire                       d_req_cop_nc;
 
   reg                        dmem_en_delayed;
   reg [`XPR_LEN-1:0]         dmem_addr_delayed;
   reg [`MEM_TYPE_WIDTH-1:0]  dmem_size_delayed;
-  reg                        dmem_en_r;
+  reg                        dmem_nc_delayed;
+
+  reg [1:0]                  fc_cnt_r;
 
   vscale_pipeline vscale
   (
@@ -75,10 +81,22 @@ module core_top
 
   always @(posedge clk or negedge rst_n) begin
     if(~rst_n) begin
+      fc_cnt_r <= MAX_REQ_ON_THE_FLY;
+    end
+    else begin
+      if((dmem_en_delayed | (dmem_en & ~dmem_wen)) & ~d_req_ack)
+        fc_cnt_r <= fc_cnt_r - 1;
+      else if(~(dmem_en_delayed | (dmem_en & ~dmem_wen)) & d_req_ack)
+        fc_cnt_r <= fc_cnt_r + 1;
+    end
+  end
+
+  always @(posedge clk or negedge rst_n) begin
+    if(~rst_n) begin
       dmem_en_delayed <= 1'b0;
     end
     else begin
-      dmem_en_delayed <= dmem_en & dmem_wen;;
+      dmem_en_delayed <= dmem_en & dmem_wen;
     end
   end
 
@@ -86,21 +104,13 @@ module core_top
     if(~rst_n) begin
       dmem_addr_delayed <= 0;
       dmem_size_delayed <= 0;
+      dmem_nc_delayed   <= 0;
     end else begin
       if(dmem_wen) begin
         dmem_addr_delayed <= dmem_addr;
         dmem_size_delayed <= dmem_size;
+        dmem_nc_delayed   <= dmem_nc;
       end
-    end
-  end
-
-  always @(posedge clk or negedge rst_n) begin
-    if(~rst_n) begin
-      dmem_en_r <= 1'b0;
-    end
-    else begin
-      if(dmem_en_r) dmem_en_r <= ~d_req_ack | dmem_en;
-      else dmem_en_r <= dmem_en;
     end
   end
 
@@ -110,7 +120,7 @@ module core_top
   assign imem_rdata     = i_ack_rdata;
   assign imem_badmem_e  = 1'b0;
 
-  assign d_req_val      = dmem_en_r | dmem_en;
+  assign d_req_val      = dmem_en_delayed | (dmem_en & ~dmem_wen) | (fc_cnt_r == 0);
   assign d_req_addr     = (dmem_en_delayed) ? dmem_addr_delayed : dmem_addr;
   assign d_req_cop      = {1'b0, d_req_cop_nc, d_req_cop_wr};
   assign d_req_wdata    = dmem_wdata_delayed;
@@ -118,8 +128,9 @@ module core_top
   assign dmem_wait      = ~d_req_ack;
   assign dmem_rdata     = d_ack_rdata;
   assign dmem_badmem_e  = 1'b0;
+  assign dmem_nc        = (dmem_addr & ~({32{1'b0}} | NC_OFFSET)) == NC_BASE_ADDR;
 
   assign d_req_cop_wr   = dmem_en_delayed;
-  assign d_req_cop_nc   = (dmem_addr & ~({32{1'b0}} | NC_OFFSET)) == NC_BASE_ADDR;
+  assign d_req_cop_nc   = (dmem_en_delayed) ? dmem_nc_delayed : dmem_nc;
 
 endmodule
