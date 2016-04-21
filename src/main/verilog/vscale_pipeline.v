@@ -3,30 +3,32 @@
 `include "rv32_opcodes.vh"
 `include "vscale_csr_addr_map.vh"
 `include "vscale_md_constants.vh"
+`include "vscale_platform_constants.vh"
 
 module vscale_pipeline(
-                       input                        clk,
-                       input                        reset,
-                       input                        imem_wait,
-                       output [`XPR_LEN-1:0]        imem_addr,
-                       input [`XPR_LEN-1:0]         imem_rdata,
-                       input                        imem_badmem_e,
-                       input                        dmem_wait,
-                       output                       dmem_en,
-                       output                       dmem_wen,
+                       input 			    clk,
+		       input [`N_EXT_INTS-1:0] 	    ext_interrupts, 
+                       input 			    reset,
+                       input 			    imem_wait,
+                       output [`XPR_LEN-1:0] 	    imem_addr,
+                       input [`XPR_LEN-1:0] 	    imem_rdata,
+                       input 			    imem_badmem_e,
+                       input 			    dmem_wait,
+                       output 			    dmem_en,
+                       output 			    dmem_wen,
                        output [`MEM_TYPE_WIDTH-1:0] dmem_size,
-                       output [`XPR_LEN-1:0]        dmem_addr,
-                       output [`XPR_LEN-1:0]        dmem_wdata_delayed,
-                       input [`XPR_LEN-1:0]         dmem_rdata,
-                       input                        dmem_badmem_e,
-                       input                        htif_reset,
-                       input                        htif_pcr_req_valid,
-                       output                       htif_pcr_req_ready,
-                       input                        htif_pcr_req_rw,
+                       output [`XPR_LEN-1:0] 	    dmem_addr,
+                       output [`XPR_LEN-1:0] 	    dmem_wdata_delayed,
+                       input [`XPR_LEN-1:0] 	    dmem_rdata,
+                       input 			    dmem_badmem_e,
+                       input 			    htif_reset,
+                       input 			    htif_pcr_req_valid,
+                       output 			    htif_pcr_req_ready,
+                       input 			    htif_pcr_req_rw,
                        input [`CSR_ADDR_WIDTH-1:0]  htif_pcr_req_addr,
                        input [`HTIF_PCR_WIDTH-1:0]  htif_pcr_req_data,
-                       output                       htif_pcr_resp_valid,
-                       input                        htif_pcr_resp_ready,
+                       output 			    htif_pcr_resp_valid,
+                       input 			    htif_pcr_resp_ready,
                        output [`HTIF_PCR_WIDTH-1:0] htif_pcr_resp_data
                        );
 
@@ -128,6 +130,8 @@ module vscale_pipeline(
    wire                                         csr_imm_sel;
    wire [`PRV_WIDTH-1:0]                        prv;
    wire                                         illegal_csr_access;
+   wire 					interrupt_pending;
+   wire 					interrupt_taken;
    wire [`XPR_LEN-1:0]                          csr_wdata;
    wire [`XPR_LEN-1:0]                          csr_rdata;
    wire                                         retire_WB;
@@ -179,6 +183,8 @@ module vscale_pipeline(
                     .csr_cmd(csr_cmd),
                     .csr_imm_sel(csr_imm_sel),
                     .illegal_csr_access(illegal_csr_access),
+		    .interrupt_pending(interrupt_pending),
+		    .interrupt_taken(interrupt_taken),
                     .prv(prv),
                     .eret(eret)
                     );
@@ -332,6 +338,7 @@ module vscale_pipeline(
 
    vscale_csr_file csr(
                        .clk(clk),
+		       .ext_interrupts(ext_interrupts),
                        .reset(reset),
                        .addr(csr_addr),
                        .cmd(csr_cmd),
@@ -347,6 +354,8 @@ module vscale_pipeline(
                        .epc(epc),
                        .eret(eret),
                        .handler_PC(handler_PC),
+		       .interrupt_pending(interrupt_pending),
+		       .interrupt_taken(interrupt_taken),
                        .htif_reset(htif_reset),
                        .htif_pcr_req_valid(htif_pcr_req_valid),
                        .htif_pcr_req_ready(htif_pcr_req_ready),
