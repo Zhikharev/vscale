@@ -126,7 +126,10 @@ module vscale_ctrl(
       if (reset) begin
          replay_IF <= 1'b1;
       end else begin
-         replay_IF <= (redirect && imem_wait) || (fence_i && store_in_WB);
+        //replay_IF <= (redirect && imem_wait) || (fence_i && store_in_WB);
+        // This also can be use if we want more accurate work with addresses
+        if(replay_IF && imem_wait)  replay_IF <= 1'b1;
+        else replay_IF <= (redirect && imem_wait) || (fence_i && store_in_WB);
       end
    end
 
