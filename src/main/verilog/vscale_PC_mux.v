@@ -35,19 +35,19 @@ module vscale_PC_mux(
         end
         `PC_REPLAY : begin
            base = PC_IF;
-           offset = `XPR_LEN'h0;
+           offset = 31'h0;
         end
         `PC_HANDLER : begin
            base = handler_PC;
-           offset = `XPR_LEN'h0;
+           offset = 31'h0;
         end
         `PC_EPC : begin
            base = epc;
-           offset = `XPR_LEN'h0;
+           offset = 31'h0;
         end
         default : begin
            base = PC_IF;
-           offset = `XPR_LEN'h4;
+           offset = 31'h4;
         end
       endcase // case (PC_src_sel)
    end // always @ (*)
